@@ -100,6 +100,27 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
+                SizedBox(height: 102),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Colors.white,
+                  ),
+                  onPressed: (){
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => NetworthPage(amount: assetAmount - liabilitiesAmount),
+                        fullscreenDialog: true
+                        )
+                    );
+                  }, 
+                  child: Text(
+                    'Calculate',
+                    style: theme.textTheme.button!.copyWith(
+                      color:Colors.grey.shade800,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  ),
               ],
             ),
           ),
@@ -162,6 +183,21 @@ class NumberInputDialog extends StatefulWidget {
 }
 
 class _NumberInputDialogState extends State<NumberInputDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState(){
+    super.initState();
+    _controller = TextEditingController(text: widget.amount == 0 ? '' : widget.amount.toString());
+  }
+
+  @override
+  void dispose(){
+    super.dispose();
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -186,6 +222,7 @@ class _NumberInputDialogState extends State<NumberInputDialog> {
             ),
             SizedBox(height: 24),
             TextField(
+              controller: _controller,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: TextStyle(color: Colors.grey.shade900),
@@ -207,11 +244,77 @@ class _NumberInputDialogState extends State<NumberInputDialog> {
                 primary: Theme.of(context).cardColor,
                 padding: EdgeInsets.symmetric(horizontal: 56),
               ),
-              onPressed: () {},
+              onPressed: () {
+                widget.onTap(int.parse(_controller.text));
+                Navigator.of(context).pop();
+              },
               child: Text(
                 'Done',
+                style: Theme.of(context).textTheme.button!.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NetworthPage extends StatefulWidget {
+  const NetworthPage({
+    Key? key,
+    required this.amount, 
+  }) : super(key: key);
+
+  final amount;
+
+  @override
+  _NetworthPageState createState() => _NetworthPageState();
+}
+
+class _NetworthPageState extends State<NetworthPage> with SingleTickerProviderStateMixin{
+late final AnimationController _animationController = AnimationController(
+  vsync: this,
+  duration: const Duration(milliseconds: 1500),
+);
+  
+  late final Animation<int> _animation;
+
+  @override
+  void initState(){
+    super.initState();
+    _animation = IntTween(begin: 0, end: widget.amount).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
+  @override
+  void dispose(){
+    _animationController.dispose();
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ValueListenableBuilder <int>(
+              valueListenable: _animation, 
+              builder: (context ,value, child){
+                return Text('Your total net worth is $value',
+                style: Theme.of(context).textTheme.headline5,
+                textAlign: TextAlign.center,
+                );
+              },
+              ),
           ],
         ),
       ),
